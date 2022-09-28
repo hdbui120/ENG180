@@ -12,7 +12,7 @@ z = THOMAS3(a,b,c,d,n);
 %problem 1
 function x = THOMAS3(a,b,c,d,n)
 
-    %initialize first row
+    %initial condition
     bbar(1) = b(1);
     cbar(1) = c(1);
     dbar(1) = d(1);
