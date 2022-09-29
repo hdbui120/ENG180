@@ -1,15 +1,16 @@
 clear, clc;
 close all;
 
-n=8;
-for i = n/2
-    a{i} = [2 0; 0 2];
+%3B
+n = 4;
+for i = 1:n
+    a{i} = [1 -2; 0 1];
     b{i} = [-5 -1; -2 -5];
-    c{i} = [1 0; 0 1];
+    c{i} = [1 0; -1 1];
 end
-d = {[-5; -6];[-3; -4];[-3; -4];[-4; -5]};
+f = {[-5;-7];[-6;-6];[-6;-6];[-7;-6]};
 
-z = btrid(a,b,c,d,n)
+z = btrid(a,b,c,f,n)
 
 % 2x2 inverse function
 % function to find the inverse of 2x2 matrix
@@ -19,12 +20,12 @@ function in = invert(m)
     in = (1/determ).*rearrange;
 end
 
-function y = btrid(a,b,c,d,n)
+function y = btrid(a,b,c,f,n)
     
     %initialize first row
     bbar{1} = b{1};
     cbar{1} = c{1};
-    dbar{1} = d{1};
+    dbar{1} = f{1};
 
     %downward elimination
     for i = 2:n
@@ -32,7 +33,7 @@ function y = btrid(a,b,c,d,n)
         abar{i} = a{i} - multiplier*bbar{i-1};
         bbar{i} = b{i} - multiplier*cbar{i-1};
         cbar{i} = c{i};
-        dbar{i} = d{i} - multiplier*dbar{i-1};
+        dbar{i} = f{i} - multiplier*dbar{i-1};
     end
     
     %initialize cell array with matrix of size 2x2
