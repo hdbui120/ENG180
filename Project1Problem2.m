@@ -16,7 +16,8 @@ for i = 1:n
     c{i} = cm;
 end
 
-z = btrid(a,b,c,d,n)
+z = btrid(a,b,c,d,n);
+celldisp(z)
 
 % 2x2 inverse function
 % function to find the inverse of 2x2 matrix

@@ -10,7 +10,8 @@ for i = 1:n
 end
 f = {[-5;-7];[-6;-6];[-6;-6];[-7;-6]};
 
-z = btrid(a,b,c,f,n)
+z = btrid(a,b,c,f,n);
+celldisp(z)
 
 % 2x2 inverse function
 % function to find the inverse of 2x2 matrix
