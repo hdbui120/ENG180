@@ -13,7 +13,7 @@ d = -1.*ones(1,n);
 e = ones(1,n);
 f = [-5 -7 -6 -6 -6 -6 -7 -6];
 
-z = pent(a,b,c,d,e,f,n);
+z = pent(a,b,c,d,e,f,n)
 
 function x = pent(a,b,c,d,e,f,n)
 
@@ -40,7 +40,7 @@ function x = pent(a,b,c,d,e,f,n)
         ebar(i) = e(i);
         fbar(i) = f(i)-multiplier*fbar(i-1);
     end
-    
+
 %     downward elimination for b 
     for i = 2:n
         multiplier2 = bbar(i)/cbar(i-1);
