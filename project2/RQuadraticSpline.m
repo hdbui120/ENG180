@@ -22,27 +22,27 @@ xexact = linspace(0,2*pi(),100);
 yexact = sin(xexact./4).^3;
 
 %running methods with inputs from case 1
-case1 = LQuadSpline(x,y,n);
-LQuadPlot(x,y,xexact,yexact,case1,n);
+case1 = RQuadSpline(x,y,n);
+RQuadPlot(x,y,xexact,yexact,case1,n);
 
 
 
 %setting up 10 points for each spline
-function splines = LQuadSpline(x,y,n)   
-    A = [(x(2)-x(1)),((x(2)-x(1))^2);(x(3)-x(1)),((x(3)-x(1))^2)];
-    b = [y(2);y(3)];
+function splines = RQuadSpline(x,y,n)   
+    A = [(x(n-1)-x(n)),((x(n-1)-x(n))^2);(x(n-2)-x(n)),((x(n-2)-x(n))^2)];
+    b = [(y(n-1)-y(n));(y(n-2)-y(n))];
     k = ones(n-1,1);
     m = ones(n-1,1);
-    k(1) = cramer(A,b,1);
+    k(n) = cramer(A,b,1);
     
-    for i = 1:n-1
-        m(i) = ((y(i+1)-y(i))-k(i)*(x(i+1)-x(i)))/((x(i+1)-x(i))^2);
-        k(i+1) = k(i) + 2*m(i)*(x(i+1)-x(i));
+    for i = n:-1:2
+        m(i) = ((y(i-1)-y(i))-k(i)*(x(i-1)-x(i)))/((x(i-1)-x(i))^2);
+        k(i-1) = k(i) + 2*m(i)*(x(i-1)-x(i));
     end
 
     splines = cell(n-1,1);
-    for i = 1:n-1
-        xspline = linspace(x(i),x(i+1),10);
+    for i = 2:n
+        xspline = linspace(x(i-1),x(i),10);
         yspline = y(i)+k(i)*(xspline-x(i))+m(i)*(xspline-x(i)).^2;
         splines{i} = [xspline;yspline];
     end
@@ -51,11 +51,11 @@ end
 % plot x-y data points
 % plot exact function
 % plot splines
-function LQuadPlot(x,y,xexact,yexact,s,n)
+function RQuadPlot(x,y,xexact,yexact,s,n)
     figure(1);
     plot(x, y, 'bo',xexact,yexact, '--')
     hold on; grid on;
-    for i = 1:n-1
+    for i = 2:n
         plot(s{i}(1,:),s{i}(2,:),'.k')
     end
     title('Quadratic Spline Interpolation');
