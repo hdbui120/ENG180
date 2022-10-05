@@ -44,7 +44,7 @@ function splines = RQuadSpline(x,y,n)
     for i = 2:n
         xspline = linspace(x(i-1),x(i),10);
         yspline = y(i)+k(i)*(xspline-x(i))+m(i)*(xspline-x(i)).^2;
-        splines{i} = [xspline;yspline];
+        splines{i-1} = [xspline;yspline];
     end
 end
 
@@ -55,10 +55,10 @@ function RQuadPlot(x,y,xexact,yexact,s,n)
     figure(1);
     plot(x, y, 'bo',xexact,yexact, '--')
     hold on; grid on;
-    for i = 2:n
+    for i = 1:n-1
         plot(s{i}(1,:),s{i}(2,:),'.k')
     end
-    title('Quadratic Spline Interpolation');
+    title('Right Quadratic Spline Interpolation');
     xlabel('Theta');
     ylabel('f','Rotation',0);
 end

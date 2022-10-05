@@ -58,7 +58,7 @@ function LQuadPlot(x,y,xexact,yexact,s,n)
     for i = 1:n-1
         plot(s{i}(1,:),s{i}(2,:),'.k')
     end
-    title('Quadratic Spline Interpolation');
+    title('Left Quadratic Spline Interpolation');
     xlabel('Theta');
     ylabel('f','Rotation',0);
 end
