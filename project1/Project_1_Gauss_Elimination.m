@@ -33,7 +33,7 @@ function x = THOMAS3(a,b,c,d,n)
     x(n) = dbar(n)/bbar(n);
 
     % Upward substitution AKA zip it up
-    for i = n-1:1
+    for i = n-1:-1:1
         x(i) = (dbar(i)-(bbar(i)*x(i+1)))/cbar(i);
     end
 end
