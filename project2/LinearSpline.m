@@ -10,9 +10,13 @@ n_3 = 40;
 del_3 = .0146;
 k = 1.1;
 
-[a1,a2,a3,a4] = linsplin(del_1,k,n_1);
-[b1,b2,b3,b4] = linsplin(del_2,k,n_2);
-[c1,c2,c3,c4] = linsplin(del_3,k,n_3);
+[a1,a2,a3,a4] = linsplin(del_1,k,n_1); %case 1
+[b1,b2,b3,b4] = linsplin(del_2,k,n_2); %case 2
+[c1,c2,c3,c4] = linsplin(del_3,k,n_3); %case 3
+
+area1 = trapinteg(a3, del_1, k, n_1);
+area2 = trapinteg(b3, del_2, k, n_2);
+area3 = trapinteg(c3, del_3, k, n_3)
 
 figure(1);
 subplot(2,2,1);
@@ -28,10 +32,13 @@ linsplinplot(c1,c2,c3,c4);
 %plotting function
 function linsplinplot(a,b,c,n)
     %plotting
-    plot(b, c, 'bo',b, c, '--')
+    plot(b, c, 'bo')
     for i = 1:n-1
         plot(a{i}(1,:),a{i}(2,:),'.k')
     end
+    title('Linear Spline Interpolation');
+    xlabel('Theta');
+    ylabel('f','Rotation',0);
 end
 
 
@@ -45,7 +52,7 @@ function [a,b,c,d] = linsplin(del, k, n)
     theta(n) = 2*pi();
     
     for i = 1:n-2
-        theta(i+1) = theta(i) + del*(k^i);
+        theta(i+1) = theta(i) + del*(k^(i-1));
     end
 
     %generating range points (change orginal eqn here)
@@ -64,4 +71,17 @@ function [a,b,c,d] = linsplin(del, k, n)
     b = theta;
     c = f;
     d = n;
+end
+
+function area = trapinteg(y,del,k,n)
+    delx = ones(n-1,1);
+    trapezoids = ones(n-1,1);
+    for i = 1:n-1
+        delx(i) = del*(k^(i-1));
+    end
+    multiplier = delx./2;
+    for i = 1:n-1
+        trapezoids(i) = y(i)+y(i+1);
+    end
+    area = trapezoids'*multiplier;
 end
