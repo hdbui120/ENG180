@@ -1,6 +1,9 @@
 clear, clc; 
 close all;
 
+clear, clc; 
+close all;
+
     %---scope---%
 % 1. solve ditriagonal for k
 % 2. solve m and d
@@ -15,64 +18,47 @@ y = sin(x./4).^3;
 xexact = linspace(0,2*pi(),100);
 yexact = sin(xexact./4).^3;
 
-s1 = clampedSpline(x,y,n);
-cubicplot(x,y,xexact,yexact,s1,n)
+s1 = naturalCubic(x,y,n);
+naturalCubicPlot(x,y,xexact,yexact,s1,n)
 
-function splines = clampedSpline(x,y,n)
-    % Set up matrices for cramer's
-    Al = [(x(2)-x(1)),((x(2)-x(1))^2);(x(3)-x(1)),((x(3)-x(1))^2)];
-    bl = [y(2);y(3)];
-    Ar = [(x(n-1)-x(n)),((x(n-1)-x(n))^2);(x(n-2)-x(n)),((x(n-2)-x(n))^2)];
-    br = [(y(n-1)-y(n));(y(n-2)-y(n))];
-    k1 = cramer(Al,bl,1);
-    kn = cramer(Ar,br,1);
-    
+function splines = naturalCubic(x,y,n)
     % making tridiagonal for Thomas3 and solve for k1 to kn
     a = (1/6)*ones(1,n);
     b = (4/6)*ones(1,n);
     c = (1/6)*ones(1,n);
     e = ones(1,n);
     for i = 2:n-1
-        e(i) = (y(i+1)-y(i-1))/(2*(x(i+1)-x(i))); 
+        e(i) = (y(i+1)-2*y(i)+y(i-1))/(x(i+1)-x(i));
     end
-    e(1) = k1;
-    e(n) = kn;
-    k = THOMAS3(a,b,c,e,n);
-    k(1) = k1;
-    k(n) = kn;
-    
-    for i = 1:n-1
-        m(i) = (3*(y(i+1)-y(i))/(x(i+1)-x(i))^2)-((k(i+1)+2*k(i))/(x(i+1)-x(i)));
-        d(i) = ((k(i+1)+k(i))/(x(i+1)-x(i))^2)-((2*(y(i+1)-y(i)))/((x(i+1)-x(i))^3));
-    end
+    e(1) = 0;
+    e(n) = 0;
+    m = THOMAS3(a,b,c,e,n);
+    m(1) = 0;
+    m(n) = 0;
     
     splines = cell(n-1,1);
     for i = 1:n-1
         xspline = linspace(x(i),x(i+1),10);
-        yspline = y(i)+k(i)*(xspline-x(i))+m(i)*(xspline-x(i)).^2+d(i)*((xspline-x(i)).^3);
+        deltax = x(i+1)-x(i);
+        a0 = m(i)/(6*deltax);
+        a1 = m(i+1)/(6*deltax);
+        a2 = y(i)/deltax-(m(i)*deltax)/6;
+        a3 = y(i+1)/deltax-(m(i+1)*deltax)/6;
+        yspline = a0.*(x(i+1)-xspline).^3 + a1.*(xspline-x(i)).^3 + a2.*(x(i+1)-xspline) + a3.*(xspline-x(i));
         splines{i} = [xspline;yspline];
     end
 end
 
-function cubicplot(x,y,xexact,yexact,splines,n)
+function naturalCubicPlot(x,y,xexact,yexact,splines,n)
     figure(1);
-    plot(x, y, 'bo',xexact,yexact,'--')
+    plot(x, y, 'bo', xexact, yexact, '--')
     hold on; grid on;
     for i = 1:n-1
         plot(splines{i}(1,:),splines{i}(2,:),'.k')
     end
-    title('Clamped Cubic Spline Interpolation');
+    title('Natural Cubic Spline Interpolation');
     xlabel('Theta');
     ylabel('f','Rotation',0);
-end
-
-%take matrix a,b, and column values then use cramer's rule 
-function cram = cramer(a,b,col)
-    deterA = (a(1,1).*a(2,2))-(a(1,2).*a(2,1));
-    ai = a;
-    ai(:,col) = b;
-    deterAI = (ai(1,1).*ai(2,2))-(ai(1,2).*ai(2,1));
-    cram = deterAI/deterA;
 end
 
 function x = THOMAS3(a,b,c,d,n)
