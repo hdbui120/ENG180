@@ -1,7 +1,7 @@
 clear, clc;
 close all;
 
-%case 1
+%case 1 data points and grid condition
 n = 10;
 del = .4186;
 k = 1.1;
@@ -21,37 +21,43 @@ y = sin(x./4).^3;
 xexact = linspace(0,2*pi(),100);
 yexact = sin(xexact./4).^3;
 
-%running methods with inputs from case 1
+%running methods with inputs from case 1 to get left bias and right bias
+%splines
 sl = LQuadSpline(x,y,n);
 sr = RQuadSpline(x,y,n);
 
+% creating average quadratic splines by averaging x and y values of left
+% and right bias splines
 sa = cell(n-1,1);
 for i = 1:n-1
     sa{i} = (sl{i}+sr{i})./2;
 end
 
+%Plotting left/right bias splines and the average
 figure(1);
 subplot(2,2,1)
-QuadPlot(x,y,xexact,yexact,sl,n);
+QuadPlot(x,y,xexact,yexact,sl,n,'Lef Bias');
 subplot(2,2,2)
-QuadPlot(x,y,xexact,yexact,sr,n);
+QuadPlot(x,y,xexact,yexact,sr,n, 'Right Bias');
 subplot(2,2,[3,4])
-QuadPlot(x,y,xexact,yexact,sa,n);
+QuadPlot(x,y,xexact,yexact,sa,n, 'Average');
 
-
-%setting up 10 points for each spline
-function splines = LQuadSpline(x,y,n)   
+%Solving for left bias quadratic splines
+function splines = LQuadSpline(x,y,n)  
+    %Setting up matrix system to solve for k1
     A = [(x(2)-x(1)),((x(2)-x(1))^2);(x(3)-x(1)),((x(3)-x(1))^2)];
     b = [y(2);y(3)];
     k = ones(n-1,1);
     m = ones(n-1,1);
     k(1) = cramer(A,b,1);
     
+    %solving for m and the rest of k from left to right
     for i = 1:n-1
         m(i) = ((y(i+1)-y(i))-k(i)*(x(i+1)-x(i)))/((x(i+1)-x(i))^2);
         k(i+1) = k(i) + 2*m(i)*(x(i+1)-x(i));
     end
 
+    %setting up 10 points for each spline and solve for splines
     splines = cell(n-1,1);
     for i = 1:n-1
         xspline = linspace(x(i),x(i+1),10);
@@ -61,17 +67,20 @@ function splines = LQuadSpline(x,y,n)
 end
 
 function splines = RQuadSpline(x,y,n)   
+    %Setting up matrix system to solve for kn
     A = [(x(n-1)-x(n)),((x(n-1)-x(n))^2);(x(n-2)-x(n)),((x(n-2)-x(n))^2)];
     b = [(y(n-1)-y(n));(y(n-2)-y(n))];
     k = ones(n-1,1);
     m = ones(n-1,1);
     k(n) = cramer(A,b,1);
     
+    %Solving for the rest of m and k from right to left
     for i = n:-1:2
         m(i) = ((y(i-1)-y(i))-k(i)*(x(i-1)-x(i)))/((x(i-1)-x(i))^2);
         k(i-1) = k(i) + 2*m(i)*(x(i-1)-x(i));
     end
-
+    
+    %set up 10 points per subdivision and solve for right bias splines
     splines = cell(n-1,1);
     for i = 2:n
         xspline = linspace(x(i-1),x(i),10);
@@ -83,13 +92,13 @@ end
 % plot x-y data points
 % plot exact function
 % plot splines
-function QuadPlot(x,y,xexact,yexact,s,n)
+function QuadPlot(x,y,xexact,yexact,s,n,str)
     plot(x, y, 'bo',xexact,yexact, '--')
     hold on; grid on;
     for i = 1:n-1
         plot(s{i}(1,:),s{i}(2,:),'.k')
     end
-    title('Quadratic Spline Interpolation');
+    title(str);
     xlabel('Theta');
     ylabel('f','Rotation',0);
 end
