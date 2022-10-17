@@ -1,0 +1,30 @@
+clc, clear; 
+close all;
+
+k = 8;
+
+c1 = 1.6;
+c2 = 1.1;
+%     a = -.13;
+%     b = .44;
+%     c = .25;
+%     alpha = 2;
+x = ones(k,1);
+r = ones(k,1);
+x(1) = 1.6;
+
+for i=1:k-1
+    r(i) = (c1/c2)*x(i)^2.1;
+    rdot = (1.5*c1/c2)*x(i)^(2.1-1);
+    x(i+1) = x(i) - r(i)/rdot;
+end
+r(k) = (c1/c2)*x(k)^1.5;
+
+y = linspace(-2,2,100);
+rexact = (1.6/1.1).*y.^1.5;
+figure(1);
+plot(y,y,y,rexact)
+xline(x(1))
+hold on; grid on;
+plot(x(k),r(k-1),'bo')
+hold on;
