@@ -3,14 +3,54 @@
     File:           ENG180_PJ3_main_Hieu_Bui.m
     Author:         Hieu Bui
     Date:           10/19/2022
-    Description:    Finding answers through iterative approximation
+    Description:    Finding answers through iterative approximations
 
 %}
 
 clc, close all;
 clear;
 
-k = 8;
+k = 10;
+jacob = 'Jacobi';
+gauss = 'GSeidel';
+sor = 'SOR';
+eqn = @(x,n) cos(pi.*x./(n+1));
+
+%Plotting problem 1
+[clk1,iterations1,res1,cor1] = iterationEfficiency(10,1.2,jacob,eqn);
+[clk2,iterations2,res2,cor2] = iterationEfficiency(10,1.2,gauss,eqn);
+[clk3,iterations3,res3,cor3] = iterationEfficiency(10,1.2,sor,eqn);
+figure("Name",'Problem 1 ')
+subplot(2,1,1)
+loglog(iterations1,res1)
+hold on
+loglog(iterations2,res2)
+hold on
+loglog(iterations3,res3)
+hold on
+title('Residuals vs Iterations')
+legend1=sprintf('Jacobi      %fs ',clk1);
+legend2=sprintf('Gauss S.    %fs',clk2);
+legend3=sprintf('SOR         %fs',clk3);
+xlabel('Iterations')
+ylabel('Residuals')
+legend(legend1,legend2,legend3,"Location",'southwest')
+subplot(2,1,2)
+loglog(iterations1,cor1)
+hold on
+loglog(iterations2,cor2)
+hold on
+loglog(iterations3,cor3)
+hold on
+title('Corrections vs Iterations')
+legend1=sprintf('Jacobi      %fs ',clk1);
+legend2=sprintf('Gauss S.    %fs',clk2);
+legend3=sprintf('SOR         %fs',clk3);
+xlabel('Iterations')
+ylabel('Corrections')
+legend(legend1,legend2,legend3,"Location",'southwest')
+
+%Plotting problem 2
 figure('Name','Fixed Point Iterations','NumberTitle','off')
 subplot(3,1,1)
 [r11,r21]=p2f('a',k,.5,3,.7);
@@ -31,19 +71,85 @@ xlabel('x')
 ylabel('y')
 hold on;
 
-% figure('Name','Secant Method',NumberTitle='off')
-% [root1,root2] = p2secant('a',1,1.3,.2,.2,30,.5);
-% title(sprintf('Propellant Burnt when n = .5, r1 = %.2f, r2 = %.2f', root1, root2))
-% xlabel('x')
-% ylabel('y')
+figure('Name','Newton Method')
+subplot(2,1,1)
+[newtonR1]=p2n('a',k,2.1,3,.49);
+[newtonR2]=p2n('a',k,2.1,3,.2);
+title(sprintf('Propellant Burnt when n=2.1 using Newton; root 1 = %.2f; root 2 = %.2f', newtonR1,newtonR2))
+xlabel('x')
+ylabel('y')
+hold on;
+subplot(2,1,2)
+[newtonR3]=p2n('b',k,1,3,.29);
+title(sprintf('Semenov using Newton; root = %.2f', newtonR2))
+xlabel('x')
+ylabel('y')
+hold on;
 
-% subplot(4,1,4)
-% [newtonR11, newtonR22]=p2n('a',k,.5,3,2);
-% title('Propellant Burnt when n=.5 using Newton')
-% xlabel('x')
-% ylabel('y')
-% hold on;
 
+%Function for problem 1
+function [clk,iter,resValues, corValues] = iterationEfficiency(n,guess,method,eqn) 
+    %create tridiagonal matrix
+    a = ones(n-1,1); 
+    b = -2.*ones(n,1);
+    c = ones(n-1,1);
+    matrixA = diag(a,-1)+diag(b)+diag(c,1);
+    iterations = 0;
+    resid = 1;
+    tolerance = 1e-15;
+    f = eqn(1:n,n);
+    xNew = guess.*ones(n,1);
+
+    switch method
+        case 'Jacobi'
+            start = tic;
+            while resid > tolerance
+                xOld = xNew;
+                for i=1:n
+                    xNew(i) = xOld(i)+1/matrixA(i,i)*(f(i)-matrixA(i,:)*xOld(:));
+                end
+                resid = max(abs(matrixA*xNew-f'));
+                cor = max(abs(xNew-xOld));
+                iterations = iterations + 1;
+                resValues(iterations) = resid;
+                corValues(iterations) = cor;
+            end
+            clk = toc(start);
+            iter = linspace(1,iterations,iterations);
+        case 'GSeidel'
+            start = tic;
+            while resid > tolerance
+                xOld = xNew;
+                for i = 1:n
+                    xNew(i) = xOld(i)+(f(i)-matrixA(i,1:i-1)*xNew(1:i-1)-matrixA(i,i:n)*xOld(i:n))/matrixA(i,i);
+                end
+                resid = max(abs(matrixA*xNew-f'));
+                cor = max(abs(xNew-xOld));
+                iterations = iterations + 1;
+                resValues(iterations) = resid;
+                corValues(iterations) = cor;
+            end
+            clk = toc(start);
+            iter = linspace(1,iterations,iterations);
+        case 'SOR'
+            omega = 1.7;
+            start = tic;
+            while resid > tolerance
+                xOld = xNew;
+                for i = 1:n
+                    xGS = xOld(i)+(f(i)-matrixA(i,1:i-1)*xNew(1:i-1)-matrixA(i,i:n)*xOld(i:n))/matrixA(i,i);
+                    xNew(i) = omega*(xGS-xOld(i))+xOld(i);
+                end
+                resid = max(abs(matrixA*xNew-f'));
+                cor = max(abs(xNew-xOld));
+                iterations = iterations + 1;
+                resValues(iterations) = resid;
+                corValues(iterations) = cor;
+            end
+            clk = toc(start);
+            iter = linspace(1,iterations,iterations);
+    end
+end
 
 % Fixed point iterations problem 2A
 % e = which equation ['a' = 2a; 'b' = 2b]
@@ -117,10 +223,6 @@ function [r1,r2] = p2f(e,k,n,s,g)
         for i = 1:k
             r(i) =  semenov2(x(i));
             x(i+1) = r(i);
-            if semenov2(x(i+1))-r(i)>1
-                disp("pass tolerance")
-                break
-            end
         end
         r(k) = semenov2(x(k));
         y = linspace(0,s,20);
@@ -136,7 +238,7 @@ function [r1,r2] = p2f(e,k,n,s,g)
 end
 
 %Approximate with newton method
-function [r1,r2] = p2n(e,k,n,s,g)
+function [root] = p2n(e,k,n,s,g)
 
 c1 = 1.6;
 c2 = 1.1;
@@ -146,82 +248,51 @@ c = .25;
 alpha = 2;
 
 %root function 1 for propellant burnt
-if strcmp(e,'a')
+if strcmp(e,'a') %if paramater e is 'a' then solve for propellent burn equation
     x = ones(k,1);
     r = ones(k,1);
     x(1) = g;
+    func = @(x) c1.*x.^n - c2.*x;
+    funcdot = @(x) c1*n.*x.^(n-1)-c2;
     for i=1:k-1
-        r(i) = (c1/c2)*x(i)^n; 
-        rdot = (n*c1/c2)*x(i)^(n-1);
+        r(i) = func(x(i)); 
+        rdot = funcdot(x(i));
         x(i+1) = x(i) - r(i)/rdot;
     end
-    r(k) = (c1/c2)*x(k)^n;
+    r(k) = func(x(k));
     
     y = linspace(-2,s,100);
-    rexact = (c1/c2).*y.^n;
+    rexact = func(y);
     
     plot(y,rexact,'--')
     xline(x(1))
     hold on; grid on;
     plot(x(k),r(k),'bo')
     hold on;
-    r1 = r(k);
-
-    %root function 2 for propellant burnt
-    for i=1:k-1
-        r(i) = (c2/c1*x(i))^(1/n);
-        rdot = (c2/c1/n)*(c2/c1*x(i))^((1-n)/n);
-        x(i+1) = x(i) - r(i)/rdot;
-    end
-    r(k) = (c2/c1*x(k))^(1/n);
-    
-    y = linspace(-2,s,100);
-    rexact = (c2/c1).*y.^(1/n);
-    
-    plot(y,rexact,'--')
-    xline(x(1))
-    hold on; grid on;
-    plot(x(k),r(k),'bo')
-    hold on;
-    r2 = r(k);
-elseif strcmp(e,'b')
+    root = x(k);
+elseif strcmp(e,'b') %if paramater e is 'b' then solve for semenov equation
     x = ones(k,1);
     r = ones(k,1);
     x(1) = g;
+    func = @(x) c.*exp(1).^(-alpha./x)-a-b.*x; 
+    funcdot = @(x) (c*alpha./x^2).*exp(1).^-alpha./x - b;
     %====root equation 1 for semenov====%
     for i = 1:k-1
-        r(i) = (c*exp(1)^(-alpha/x(i))-a)/b;
-        rdot = alpha*c/b*x(i)^2*e^(-alpha/x(i));
+        r(i) = func(x(i));
+        rdot = funcdot(x(i));
         x(i+1) = x(i) - r(i)/rdot;
     end
-    r(k) = (c*exp(1)^(-alpha/x(k))-a)/b;
+    r(k) = func(x(k));
     
     y = linspace(-2,s,100);
-    rexact = (c.*exp(1).^(-alpha./y)-a)./b;
+    rexact = func(y);
     
     plot(y,rexact,'--')
     xline(g)
     hold on; grid on;
     plot(x(k),r(k),'bo')
     hold on;
-    r1 = r(k);
-    
-    %====root 2 for semenov====%
-    for i = 1:k-1
-        r(i) = alpha*(log((alpha+b*x(i))/c))^-1;
-        rdot = alpha*b/c*(log((alpha+b*x(i))/c))^-2;
-        x(i+1) = x(i) - r(i)/rdot;
-    end
-    r(k) = alpha*log((alpha+b*x(k))/c)^-1;
-    y = linspace(-2,s,100);
-    rexact2 = -alpha.*log((alpha+b.*y)./c).^-1;
-    
-    plot(y,rexact2,'--')
-    xline(g)
-    hold on; grid on;
-    plot(x(k),r(k),'bo')
-    hold on;
-    r2 = r(k);
+    root = x(k);
 end
 end
 

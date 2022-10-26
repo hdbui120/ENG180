@@ -1,46 +1,88 @@
 clc, clear; 
 close all;
 
-%general strategy for secant method
-% r = root equation;
-% x(1) = initial guess;
-% rdot = [r(x(i))-r(x(i-1))]/(x(i)-x(i-1))
-% 
-% x(i+1) = x(i) - r(i)/rdot for 2<i<k
-% r(k) = (r(x(k)))
 
-k = 30;
-c1 = 1.6; c2 = 1.1; n = .5;
+jacob = 'Jacobi';
+gauss = 'GSeidel';
+sor = 'SOR';
+eqn = @(x,n) cos(pi.*x./(n+1));
+[clk1,iterations1,res1,cor1] = iterationEfficiency(10,1.2,jacob,eqn);
+[clk2,iterations2,res2,cor2] = iterationEfficiency(10,1.2,gauss,eqn);
+[clk3,iterations3,res3,cor3] = iterationEfficiency(10,1.2,sor,eqn);
+figure("Name",'Problem 1 ')
+loglog(iterations1,res1)
+hold on
+loglog(iterations2,res2)
+hold on
+loglog(iterations3,res3)
+hold on
+title('Residuals vs Iterations')
+legend1=sprintf('Jacobi      %fs ',clk1);
+legend2=sprintf('Gauss S.    %fs',clk2);
+legend3=sprintf('SOR         %fs',clk3);
+xlabel('Iterations')
+ylabel('Residuals')
+legend(legend1,legend2,legend3,"Location",'southwest')
 
-[r1,r2] = p2secant(1,1.1,.3,.3,k,n);
 
-function [root1,root2] = p2secant(x11,x21,x12,x22,k,n)
-c1 = 1.6;
-c2 = 1.1;
-a = -.13;
-b = .44;
-c = .25;
-alpha = 2;
-
-rootFunc1 = @(x) (c1/c2)*x.^n;
-x(1) = x11;
-x(2) = x21;
-
-root = ones(k,1);
-root(1) = rootFunc1(x(1));
-
-for i = 2:k-1
-    root(i) = rootFunc1(x(i));
-    rdot = root(i)-root(i-1)/(x(i)-x(i-1));
-    x(i+1) = x(i) -root(i)/rdot;
-end
-root(k)=rootFunc1(x(k));
-root = root(k);
-
-y = linspace(0,5,20);
-figure(1)
-xline(x(1))
-hold on;
-plot(y,rootFunc1(y),x(k),root(k),'bo')
-
+function [clk,iter,resValues, corValues] = iterationEfficiency(n,guess,method,eqn) 
+    a = ones(n-1,1); 
+    b = -2.*ones(n,1);
+    c = ones(n-1,1);
+    matrixA = diag(a,-1)+diag(b)+diag(c,1);
+    iterations = 0;
+    resid = 1;
+    tolerance = 1e-15;
+    f = eqn(1:n,n);
+    xNew = guess.*ones(n,1);
+    
+    switch method
+        case 'Jacobi'
+            start = tic;
+            while resid > tolerance
+                xOld = xNew;
+                for i=1:n
+                    xNew(i) = xOld(i)+1/matrixA(i,i)*(f(i)-matrixA(i,:)*xOld(:));
+                end
+                resid = max(abs(matrixA*xNew-f'));
+                cor = max(abs(xNew-xOld));
+                iterations = iterations + 1;
+                resValues(iterations) = resid;
+                corValues(iterations) = cor;
+            end
+            clk = toc(start);
+            iter = linspace(1,iterations,iterations);
+        case 'GSeidel'
+            start = tic;
+            while resid > tolerance
+                xOld = xNew;
+                for i = 1:n
+                    xNew(i) = xOld(i)+(f(i)-matrixA(i,1:i-1)*xNew(1:i-1)-matrixA(i,i:n)*xOld(i:n))/matrixA(i,i);
+                end
+                resid = max(abs(matrixA*xNew-f'));
+                cor = max(abs(xNew-xOld));
+                iterations = iterations + 1;
+                resValues(iterations) = resid;
+                corValues(iterations) = cor;
+            end
+            clk = toc(start);
+            iter = linspace(1,iterations,iterations);
+        case 'SOR'
+            omega = 1.7;
+            start = tic;
+            while resid > tolerance
+                xOld = xNew;
+                for i = 1:n
+                    xGS = xOld(i)+(f(i)-matrixA(i,1:i-1)*xNew(1:i-1)-matrixA(i,i:n)*xOld(i:n))/matrixA(i,i);
+                    xNew(i) = omega*(xGS-xOld(i))+xOld(i);
+                end
+                resid = max(abs(matrixA*xNew-f'));
+                cor = max(abs(xNew-xOld));
+                iterations = iterations + 1;
+                resValues(iterations) = resid;
+                corValues(iterations) = cor;
+            end
+            clk = toc(start);
+            iter = linspace(1,iterations,iterations);
+    end
 end
