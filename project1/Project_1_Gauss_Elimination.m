@@ -34,7 +34,7 @@ function x = THOMAS3(a,b,c,d,n)
 
     % Upward substitution AKA zip it up
     for i = n-1:-1:1
-        x(i) = (dbar(i)-(bbar(i)*x(i+1)))/cbar(i);
+        x(i) = (dbar(i)-(cbar(i)*x(i+1)))/bbar(i);
     end
 end
 % end problem 1
