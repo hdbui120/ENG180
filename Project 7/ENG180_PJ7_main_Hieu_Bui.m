@@ -8,26 +8,36 @@ t = 0:delta:10;
 
 
 [xref,vref,x,v] = ivp(1,0,delta,'eulerF',t);
+[xref1,vref2,xbe,vbe] = ivp(1,0,delta,'eulerB',t);
 
 % Plot area 
 figure(1)
-plot(t,x,t(1:30:length(t)),xref(1:30:length(t)),'ko')
+plot(t,x,t,xref)
+hold on;
+plot(t,xbe)
+hold on;
 xlabel('t')
 ylabel('x')
-hold on; grid on;
+
 figure(2)
-plot(t,v,t(1:30:length(t)),vref(1:30:length(t)),'ko')
+plot(t,v,t,vref)
+hold on;
+plot(t,vbe)
+hold on;
 xlabel('t')
-ylabel('v')
-hold on; grid on;
+ylabel('v') 
 
 function [xexact, vexact, x,v] = ivp(v0,x0,delta,method,t)
 m = 3; g = 2;
 c1 = m*g; c2 = m;
 ydot = @(v) [c1/m-c2/m*v;v];
-fEuler = @(dy,y,h) dy*h+y;
 xexact = m/c2*(c1/c2-1)*exp(-c2/m*t)-m/c2*(c1/c2-1)+c1/c2*t;
 vexact = -(c1/c2-1)*exp(-c2/m*t)+(c1/c2);
+
+%Function handler for different methods
+fEuler = @(dy,y,h) dy*h+y;
+bEulerV = @(y,c1,c2,m,h) (y*m+c1*h)/(m+c2*h);  
+bEulerX = @(y,v,h) y+v*h;
 
 switch method
     case 'eulerF'
@@ -42,6 +52,18 @@ switch method
         v = y(1,:);
         x = y(2,:);
     case 'eulerB'
+        gv = v0;
+        gx = x0;
+        v(1) = v0;
+        x(1) = x0;
+        % Fixed point iterations
+        for i = 1:length(t)-1
+            v(i+1) = bEulerV(gv,c1,c2,m,delta);
+            x(i+1) = bEulerX(gx,v(i),delta);
+            gv = v(i+1);
+            gx = x(i+1);
+        end
+
 end
 
 end
