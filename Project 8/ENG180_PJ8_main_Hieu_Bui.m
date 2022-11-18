@@ -10,10 +10,18 @@ close all;
 
 %}
 
-[x,t,u] = heatEqn('fe');
-imagesc(t,x,u')
+[x,t,u] = heatEqn('fe',.4);
+figure('Name',"Forward Euler"), imagesc(t,x,u')
 set(gca,'Ydir','normal')
 title('Problem 1a: Heat Equation with Forward Euler')
+xlabel('$t$', 'Interpreter','latex')
+ylabel('$x$','Interpreter','latex')
+colorbar;
+
+[x1,t1,u1] = heatEqn('be',.4);
+figure('Name',"Backward Euler"), imagesc(t1,x1,u1')
+set(gca,'Ydir','normal')
+title('Problem 1a: Heat Equation with Backward Euler')
 xlabel('$t$', 'Interpreter','latex')
 ylabel('$x$','Interpreter','latex')
 colorbar;
@@ -24,7 +32,7 @@ colorbar;
 % solve for the next time step
 % solve for u(x,t_n+1) with tridiagonal system
 % solve for next time step
-function [x,t,u] = heatEqn(option)
+function [x,t,u] = heatEqn(option,k)
 
 %====grid====%
 n = 101;
@@ -32,12 +40,11 @@ x = linspace(0,pi,n);
 deltax = x(2);
 deltat = .9*(deltax^2/2);
 t = 0:deltat:pi;
-k = .4;
+initialTemp = @(x) sin(x);
+alp = (deltat*k)/(deltax^2);
 
 switch option
     case 'fe'
-        initialTemp = @(x) sin(x);
-        alp = (deltat*k)/(deltax^2);
         solver = @(u0,u1,u2,alp) alp*(u0-2*u1+u2)+u1;
         u = zeros(length(t),n);
         u(1,:) = initialTemp(x); % temperature at time 0 for all x
@@ -50,6 +57,18 @@ switch option
                 u(j+1,i) = solver(u0,u1,u2,alp);
             end
          
+        end
+    case 'be'
+        u = zeros(length(t),n);
+        u(1,:) = initialTemp(x); % temperature at time 0 for all x
+        u(:,n) = 0;
+        a = alp.*ones(n); % lower diagonal
+        b = -(2*alp+1).*ones(n); % main diagonal
+        c = alp.*ones(n); % upper diagonal
+        b(1) = 1; c(1) = 0; a(n) = 0; b(n) = 1; % boundary conditions
+        for j = 1:length(t)-1
+            d = u(j,:); % result array changes with respect to time
+            u(j+1,:) = THOMAS3(a,b,c,d,n);
         end
 end
 end
