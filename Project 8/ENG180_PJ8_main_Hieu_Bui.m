@@ -26,6 +26,14 @@ xlabel('$t$', 'Interpreter','latex')
 ylabel('$x$','Interpreter','latex')
 colorbar;
 
+[x2,t2,u2] = heatEqn('crank',.4);
+figure('Name',"Crank Nicolson"), imagesc(t2,x2,u2')
+set(gca,'Ydir','normal')
+title('Problem 1a: Heat Equation with Crank Nicolson')
+xlabel('$t$', 'Interpreter','latex')
+ylabel('$x$','Interpreter','latex')
+colorbar;
+
 %====Problem 1====%
 % 1A Heat Equation: du/dt = k*d2u/dt2; k = .4; 0<=t<=pi
 % generate u(x,0) with given function
@@ -70,6 +78,26 @@ switch option
             d = u(j,:); % result array changes with respect to time
             u(j+1,:) = THOMAS3(a,b,c,d,n);
         end
+    case 'crank'
+        u = zeros(length(t),n);
+        u(1,:) = initialTemp(x); % temperature at time 0 for all x
+        u(:,n) = 0;
+        alpha = (deltat*k)/(2*deltax^2);
+        a = -alpha.*ones(n); 
+        b = (1+2*alpha).*ones(n); 
+        c = -alpha.*ones(n);
+        b(1) = 1; c(1) = 0; a(n) = 0; b(n) = 1; % boundary conditions
+        d = zeros(n,1);
+        for j = 1:length(t)-1
+            for i = 2:n-1
+                h1 = alpha*u(j,i-1);
+                h2 = (1-2*alpha)*u(j,i);
+                h3 = alpha*u(j,i+1);
+                d(j,i) = (h1+h2+h3);
+            end
+            u(j+1,:) = THOMAS3(a,b,c,d,n);
+        end
+        
 end
 end
 
