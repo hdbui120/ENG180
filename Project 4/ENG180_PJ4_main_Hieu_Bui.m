@@ -29,7 +29,7 @@ hold on
 loglog(iterations3,res3)
 hold on
 title('Residuals vs Iterations')
-legend1=sprintf('Jacobi      %fs ',clk1);
+legend1=sprintf('Jacobi      %fs',clk1);
 legend2=sprintf('Gauss S.    %fs',clk2);
 legend3=sprintf('SOR         %fs',clk3);
 xlabel('Iterations')
