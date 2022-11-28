@@ -39,16 +39,6 @@ u(:,1) = 0; % left surface
 u(end,:) = 0; % top surface
 u(:,end) = 0; % right surface
 
-% setting up tridiagonal system
-alpha = 1/dy^2;
-beta = -2/dy^2 - 2/dx^2;
-gamma = -1/dx^2;
-
-a = alpha.*ones(nj,1);
-b = beta.*ones(nj,1);
-c = alpha.*ones(nj,1);
-b(1) = 1; b(end) = 1; c(1) = 0; a(end) = 0;
-
 % Set up variables for SOR loop 
 corrections = 1;
 tol = 1e-10;
@@ -58,12 +48,20 @@ iterations = 0;
 switch SOR_option
     % iterate from left to right
     case 'LR'
+        % setting up tridiagonal system
+        alpha = -(dx^2/dy^2);
+        beta = 2*dx^2/dy^2 + 2*dy^2/dy^2;
+        
+        a = alpha.*ones(nj,1);
+        b = beta.*ones(nj,1);
+        c = alpha.*ones(nj,1);
+        b(1) = 1; b(end) = 1; c(1) = 0; a(end) = 0;
         tstart = tic;
         % Iterations and Thomas3
         while corrections > tol
             uvold = unew;
             for i=2:ni-1
-                d = gamma.*(unew(:,i-1)+uvold(:,i+1));
+                d = (unew(:,i-1)+uvold(:,i+1));
                 d(1) = unew(1,i);
                 d(nj) = unew(end,i);
                 uv = w.*THOMAS3(a,b,c,d,nj)'+ (1-w).*uvold(:,i);
@@ -78,12 +76,20 @@ switch SOR_option
 
     % iterate from bottom to top
     case 'BT'
+        % setting up tridiagonal system
+        alpha = -(dy^2/dx^2);
+        beta = 2*dy^2/dx^2 + 2*dx^2/dy^2;
+        
+        a = alpha.*ones(nj,1);
+        b = beta.*ones(nj,1);
+        c = alpha.*ones(nj,1);
+        b(1) = 1; b(end) = 1; c(1) = 0; a(end) = 0;
         tstart = tic;
         % Iterations and Thomas3
         while corrections > tol
             uvold = unew;
             for i=2:nj-1
-                d = gamma.*(unew(i-1,:)+uvold(i+1,:));
+                d = (unew(i-1,:)+uvold(i+1,:));
                 d(1) = unew(i,1);
                 d(ni) = unew(i,end);
                 uv = w.*THOMAS3(a,b,c,d,ni)+ (1-w).*uvold(i,:);
