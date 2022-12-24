@@ -6,14 +6,14 @@ n = 101;
 x = linspace(-1,1,n);
 delta = 2/n;
 
-u1 = bvp(-4,.1,delta,n);
-u2 = bvp(4,.1,delta,n);
+u1 = bvp(-2,.1,delta,n);
+u2 = bvp(2,.1,delta,n);
 u3 = bvpSpecial(0,.1,delta,n);
-u4 = bvp(-4,.2,delta,n);
-u5 = bvp(4,.2,delta,n);
+u4 = bvp(-5,.2,delta,n);
+u5 = bvp(5,.2,delta,n);
 u6 = bvpSpecial(0,.2,delta,n);
-u7 = bvp(-4,.3,delta,n);
-u8 = bvp(4,.3,delta,n);
+u7 = bvp(-6,.3,delta,n);
+u8 = bvp(6,.3,delta,n);
 u9 = bvpSpecial(0,.3,delta,n);
 
 figure('Name',"epsilon .1")
