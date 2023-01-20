@@ -110,12 +110,10 @@ switch method
     case 'crank1a'
         crankV = @(v,c1,c2,m,delta) (2*c1*delta+v*(2*m-c2*delta))/(2*m+c2*delta);
         crankX = @(v1,v2,x) delta*v1/2+delta*v2/2+x;
-        vdot = @(v) c1/m-c2/m*v;
         y = [v0;x0];
         for i=1:length(t)-1
             vi = y(1,i);
             xi = y(2,i);
-            dv = vdot(vi);
             vnew = crankV(vi,c1,c2,m,delta);
             xnew = crankX(vi,vnew,xi);
             y(:,i+1) = [vnew;xnew];
